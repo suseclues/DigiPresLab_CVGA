@@ -1,0 +1,123 @@
+import pathlib
+import pandas as pd
+import dropbox
+import zipfile
+import requests
+import os
+import io
+import shutil
+from dropbox.exceptions import AuthError
+
+
+# Insert your generated token here!
+DROPBOX_ACCESS_TOKEN = ""
+
+# Create Access Token variable
+dbx = dropbox.Dropbox(DROPBOX_ACCESS_TOKEN)
+
+# Keeps track of downloaded files
+downloaded_files = set()
+
+def connect():
+    """Create connection to Dropbox."""
+
+    try:
+        dbx = dropbox.Dropbox(DROPBOX_ACCESS_TOKEN)
+    except AuthError as e:
+        print('Error connecting to Dropbox with access token: ' + str(e))
+    return dbx
+
+def download_file(dropbox_file_path, local_file_path):
+    """Download a file from Dropbox. Note: be careful not to accidentally give this 3 arguments
+    instead of just two!!!!"""
+
+    try:
+        dbx = connect()
+
+        # Check if the file is already downloaded
+        if local_file_path in downloaded_files:
+            print(f'{local_file_path} is already downloaded. Skipping!')
+            return
+
+        with open(local_file_path, 'wb') as f:
+            metadata, result = dbx.files_download(path=dropbox_file_path)
+            f.write(result.content)
+
+        # Add the file name to the set of downloaded files
+        downloaded_files.add(local_file_path)
+
+    except Exception as e:
+        print('Error downloading file from Dropbox: ' + str(e))
+
+def list_folders(dbx, path):
+    try:
+        result = dbx.files_list_folder(path)
+
+        folders = []
+
+        for entry in result.entries:
+            if isinstance(entry, dropbox.files.FolderMetadata):
+                folders.append(entry.path_display)
+        return folders
+    except dropbox.exceptions.ApiError as err:
+        print('Failed to list folder: ', err)
+        return None
+
+def download_folder(dbx, folder_path, local_path):
+    result = dbx.files_list_folder(folder_path)
+
+    for entry in result.entries:
+        local_entry_path = os.path.join(local_path, entry.name)
+        if isinstance(entry, dropbox.files.FileMetadata):
+            # If the entry is a file, download it
+            download_file(dbx, local_entry_path)
+        elif isinstance(entry, dropbox.files.FolderMetadata):
+            # If the entry is a folder, creates a local folder
+            os.makedirs(local_entry_path, exist_ok=True)
+            download_folder(dbx, entry.path_lower, local_entry_path)
+
+def download_folder_zipped(dbx, folders, collection_folder):
+
+    for folder in folders:
+        try:
+            # Create a local directory for the folder
+            local_dir = os.path.join('./', os.path.basename(folder))
+            os.makedirs(local_dir, exist_ok=True)
+
+            # Download all files in the folder
+            download_folder(dbx, folder, local_dir)
+
+            # Create a zip file
+            zip_file_path = os.path.join(collection_folder, f'{os.path.basename(folder)}.zip')
+            with zipfile.ZipFile(zip_file_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
+                for root, dirs, files in os.walk(local_dir):
+                    for file in files:
+                        zipf.write(os.path.join(root, file), arcname=os.path.relpath(os.path.join(root, file), start=local_dir))
+
+            print(f"Downloaded {zip_file_path}")
+
+            # Delete the temporary folder after zipping
+            shutil.rmtree(local_dir)
+
+        except (dropbox.exceptions.ApiError, requests.exceptions.RequestException) as err:
+            print(f"Failed to download {folder}: ", err)
+
+def main():
+
+    # Establish dropbox connection
+    connect()
+
+    ### Create Access Token variable
+    dbx = dropbox.Dropbox(DROPBOX_ACCESS_TOKEN)
+
+    ### Create a list of the folders you want to download
+    ### if you want to have it list every folder in your Dropbox, use '' instead of '/FolderName'
+    folders = list_folders(dbx, '/FolderName')
+
+    ### Download the folders as individual zip files to the directory you want
+    #download_folders_zipped(dbx, folders, "/Volumes/ulib-darkblue-staging/CVGA/testing")
+    download_folder_zipped(dbx, folders, "/Users/susiehartings/Desktop/test")
+
+
+if __name__ == '__main__':
+    main()
