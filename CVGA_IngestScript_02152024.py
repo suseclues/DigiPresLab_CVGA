@@ -30,9 +30,9 @@ def copy_folders(source_directory, destination_directory, batch_size, copied_txt
 if __name__ == "__main__":
     try:
         source_directory = "E:\\Bagged"
-        destination_directory = "P:\\CVGA\\production\\autoTransfer"
+        destination_directory = "P:\\path\\to\\CVGA\\Autotransfer"
         batch_size = 30
-        copied_txt_file = "C:\\Users\\lstuch1\\Desktop\\copiedCVGAfiles.txt"
+        copied_txt_file = "C:\\path\\to\\txt\\file"
 
         copy_folders(source_directory, destination_directory, batch_size, copied_txt_file)
     except Exception as e:
