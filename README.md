@@ -4,7 +4,7 @@ This script automates the process of copying folders from one location to anothe
 ## Usage
 1. **Python Installation:** Ensure you have Python installed on your system (version 3.6 or higher).
 2. **Package Installation:** Install the required package using pip install bagit.
-3. **Configuration:** Customize the script variables (source_directory, destination_directory, batch_size, copied_txt_file) to match your file paths and preferences.
+3. **Configuration:** Customize the script variables *(source_directory, destination_directory, batch_size, copied_txt_file)* to match your file paths and preferences.
 4. **Execution:** Run the script by entering python CVGA_INGEST.py in your command line interface.
 
 ## Script Overview
