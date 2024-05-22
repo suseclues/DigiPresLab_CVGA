@@ -17,9 +17,11 @@ def validate_bags_in_directory(directory):
             try:
                 bag = Bag(bag_path)
                 bag.validate()
+                print(f"{bag_name} was validated")
             except Exception as e:
                 failed_bags += 1
                 validation_fails.append(bag_name)
+                print(f"{bag_name} failed validation")
 
     # Loop through folders in the directory
     for folder_name in os.listdir(directory):
